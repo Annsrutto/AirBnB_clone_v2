@@ -4,7 +4,8 @@ import unittest
 from models.base_model import BaseModel
 from models import storage
 import os
-
+from unittest.mock import patch
+# from your_module import HBNBCommand  # Adjust the import path as needed
 
 class test_fileStorage(unittest.TestCase):
     """ Class to test the file storage method """
@@ -107,3 +108,57 @@ class test_fileStorage(unittest.TestCase):
         from models.engine.file_storage import FileStorage
         print(type(storage))
         self.assertEqual(type(storage), FileStorage)
+
+class TestDoCreate(unittest.TestCase):
+    """Unit tests for the do_create function of HBNBCommand."""
+
+    def setUp(self):
+        """Set up test environment before each test."""
+        self.cmd = HBNBCommand()
+        HBNBCommand.classes = {'MyClass': MockClass}  # Mock classes dictionary
+
+    def test_class_name_missing(self):
+        """Test do_create with missing class name."""
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            self.cmd.do_create('')
+            self.assertEqual(mock_stdout.getvalue().strip(), "** class name missing **")
+
+    def test_class_does_not_exist(self):
+        """Test do_create with non-existent class."""
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            self.cmd.do_create('NonExistentClass')
+            self.assertEqual(mock_stdout.getvalue().strip(), "** class doesn't exist **")
+
+    def test_create_instance_with_no_params(self):
+        """Test do_create to create an instance without parameters."""
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            self.cmd.do_create('MyClass')
+            self.assertIn("MyClass instance created with id", mock_stdout.getvalue())
+
+    def test_create_instance_with_params(self):
+        """Test do_create to create an instance with parameters."""
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            self.cmd.do_create('MyClass name="Test Name" number=42')
+            output = mock_stdout.getvalue()
+            self.assertIn("MyClass instance created with id", output)
+            self.assertIn("name set to Test Name", output)
+            self.assertIn("number set to 42", output)
+
+class MockClass:
+    """Mock class to simulate real class behavior."""
+    def __init__(self):
+        self.id = "MockID"
+        self.attributes = {}
+
+    def save(self):
+        """Mock save method."""
+        print(f"MyClass instance created with id {self.id}")
+
+    def __setattr__(self, name, value):
+        """Override to capture attribute setting."""
+        if name != 'id':
+            print(f"{name} set to {value}")
+        self.attributes[name] = value
+
+if __name__ == '__main__':
+    unittest.main()
