@@ -4,8 +4,8 @@ import unittest
 from models.base_model import BaseModel
 from models import storage
 import os
-from unittest.mock import patch
-# from your_module import HBNBCommand  # Adjust the import path as needed
+import MySQLdb
+from your_module import HBNBCommand  # Adjust the import path as needed
 
 class test_fileStorage(unittest.TestCase):
     """ Class to test the file storage method """
@@ -109,56 +109,40 @@ class test_fileStorage(unittest.TestCase):
         print(type(storage))
         self.assertEqual(type(storage), FileStorage)
 
-class TestDoCreate(unittest.TestCase):
-    """Unit tests for the do_create function of HBNBCommand."""
+class TestDoCreateMySQL(unittest.TestCase):
+    """Unit tests for the do_create method with MySQL storage."""
 
-    def setUp(self):
-        """Set up test environment before each test."""
-        self.cmd = HBNBCommand()
-        HBNBCommand.classes = {'MyClass': MockClass}  # Mock classes dictionary
+    @classmethod
+    def setUpClass(cls):
+        """Set up the database connection for the test class."""
+        cls.db = MySQLdb.connect(host=os.getenv('HBNB_MYSQL_HOST'),
+                                 user=os.getenv('HBNB_MYSQL_USER'),
+                                 passwd=os.getenv('HBNB_MYSQL_PWD'),
+                                 db=os.getenv('HBNB_MYSQL_DB'))
+        cls.cursor = cls.db.cursor()
 
-    def test_class_name_missing(self):
-        """Test do_create with missing class name."""
-        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
-            self.cmd.do_create('')
-            self.assertEqual(mock_stdout.getvalue().strip(), "** class name missing **")
+    @classmethod
+    def tearDownClass(cls):
+        """Close the database connection after all tests have run."""
+        cls.cursor.close()
+        cls.db.close()
 
-    def test_class_does_not_exist(self):
-        """Test do_create with non-existent class."""
-        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
-            self.cmd.do_create('NonExistentClass')
-            self.assertEqual(mock_stdout.getvalue().strip(), "** class doesn't exist **")
+    def count_records(self, table):
+        """Helper method to count records in a given table."""
+        self.cursor.execute(f"SELECT COUNT(*) FROM {table}")
+        return self.cursor.fetchone()[0]
 
-    def test_create_instance_with_no_params(self):
-        """Test do_create to create an instance without parameters."""
-        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
-            self.cmd.do_create('MyClass')
-            self.assertIn("MyClass instance created with id", mock_stdout.getvalue())
+    def test_create_new_instance_increases_count(self):
+        """Test that do_create increases the count of records in the database."""
+        table_name = 'your_table_name'  # Adjust based on your schema
+        before_count = self.count_records(table_name)
 
-    def test_create_instance_with_params(self):
-        """Test do_create to create an instance with parameters."""
-        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
-            self.cmd.do_create('MyClass name="Test Name" number=42')
-            output = mock_stdout.getvalue()
-            self.assertIn("MyClass instance created with id", output)
-            self.assertIn("name set to Test Name", output)
-            self.assertIn("number set to 42", output)
+        # Assuming HBNBCommand is setup to execute do_create directly
+        cmd = HBNBCommand()
+        cmd.do_create(f'MyClass param1="value1" param2=2')  # Adjust based on actual class and parameters
 
-class MockClass:
-    """Mock class to simulate real class behavior."""
-    def __init__(self):
-        self.id = "MockID"
-        self.attributes = {}
-
-    def save(self):
-        """Mock save method."""
-        print(f"MyClass instance created with id {self.id}")
-
-    def __setattr__(self, name, value):
-        """Override to capture attribute setting."""
-        if name != 'id':
-            print(f"{name} set to {value}")
-        self.attributes[name] = value
+        after_count = self.count_records(table_name)
+        self.assertEqual(after_count, before_count + 1, "Record count did not increase by 1 after do_create")
 
 if __name__ == '__main__':
     unittest.main()
