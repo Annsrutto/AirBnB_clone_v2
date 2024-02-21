@@ -4,8 +4,6 @@ import unittest
 from models.base_model import BaseModel
 from models import storage
 import os
-import MySQLdb
-from your_module import HBNBCommand  # Adjust the import path as needed
 
 class test_fileStorage(unittest.TestCase):
     """ Class to test the file storage method """
@@ -108,41 +106,3 @@ class test_fileStorage(unittest.TestCase):
         from models.engine.file_storage import FileStorage
         print(type(storage))
         self.assertEqual(type(storage), FileStorage)
-
-class TestDoCreateMySQL(unittest.TestCase):
-    """Unit tests for the do_create method with MySQL storage."""
-
-    @classmethod
-    def setUpClass(cls):
-        """Set up the database connection for the test class."""
-        cls.db = MySQLdb.connect(host=os.getenv('HBNB_MYSQL_HOST'),
-                                 user=os.getenv('HBNB_MYSQL_USER'),
-                                 passwd=os.getenv('HBNB_MYSQL_PWD'),
-                                 db=os.getenv('HBNB_MYSQL_DB'))
-        cls.cursor = cls.db.cursor()
-
-    @classmethod
-    def tearDownClass(cls):
-        """Close the database connection after all tests have run."""
-        cls.cursor.close()
-        cls.db.close()
-
-    def count_records(self, table):
-        """Helper method to count records in a given table."""
-        self.cursor.execute(f"SELECT COUNT(*) FROM {table}")
-        return self.cursor.fetchone()[0]
-
-    def test_create_new_instance_increases_count(self):
-        """Test that do_create increases the count of records in the database."""
-        table_name = 'your_table_name'  # Adjust based on your schema
-        before_count = self.count_records(table_name)
-
-        # Assuming HBNBCommand is setup to execute do_create directly
-        cmd = HBNBCommand()
-        cmd.do_create(f'MyClass param1="value1" param2=2')  # Adjust based on actual class and parameters
-
-        after_count = self.count_records(table_name)
-        self.assertEqual(after_count, before_count + 1, "Record count did not increase by 1 after do_create")
-
-if __name__ == '__main__':
-    unittest.main()
