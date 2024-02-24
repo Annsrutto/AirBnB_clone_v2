@@ -1,7 +1,17 @@
+#!/usr/bin/python3
+"""This is the database storage class for AirBnB"""
+
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from os import getenv
-from models.base_model import Base
+from models.base_model import BaseModel, Base
+from models.user import User
+from models.state import State
+from models.city import City
+from models.amenity import Amenity
+from models.place import Place
+from models.review import Review
 
 
 class DBStorage:
@@ -10,15 +20,15 @@ class DBStorage:
     __session = None
 
     def __init__(self):
-        """Initialize DBStorage"""
-        from models.base_model import Base
-        self.__engine = create_engine('mysql+mysqldb://{}:{}@{}/{}'.
-                                      format(getenv('HBNB_MYSQL_USER'),
-                                             getenv('HBNB_MYSQL_PWD'),
-                                             getenv('HBNB_MYSQL_HOST'),
-                                             getenv('HBNB_MYSQL_DB')),
-                                      pool_pre_ping=True)
-        if getenv('HBNB_ENV') == 'test':
+        user = os.getenv("HBNB_MYSQL_USER")
+        pwd = os.getenv("HBNB_MYSQL_PWD")
+        host = os.getenv("HBNB_MYSQL_HOST")
+        db = os.getenv("HBNB_MYSQL_DB")
+        env = os.getenv("HBNB_ENV")
+        engine_str = "mysql+mysqldb://{}:{}@{}/{}".format(user, pwd, host, db)
+        self.__engine = create_engine(engine_str, pool_pre_ping=True)
+        Base.metadata.bind = self.__engine
+        if env == "test":
             Base.metadata.drop_all(self.__engine)
 
     def all(self, cls=None):
