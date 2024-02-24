@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 import os
 from os import getenv
 
+
 class State(BaseModel, Base):
     """ State class """
     __tablename__ = 'states'

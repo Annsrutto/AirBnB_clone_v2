@@ -5,6 +5,7 @@ from sqlalchemy import Column, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
+
 class User(BaseModel, Base):
     """Represents a user for the HBNB project."""
     __tablename__ = 'users'
