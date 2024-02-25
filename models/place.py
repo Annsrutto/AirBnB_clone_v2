@@ -17,3 +17,41 @@ class Place(BaseModel, Base):
     price_by_night = Column(Integer, default=0, nullable=False)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
+    amenity_ids = []
+
+    reviews = relationship("Review", backref="place",
+                           cascade="all, delete-orphan")
+    amenities = relationship("Amenity", secondary=place_amenity,
+                             back_populates="place_amenities", viewonly=False)
+
+    @property
+    def reviews(self):
+        """
+        returns a list of reviews with place ids
+        """
+        reviews = models.storage.all("Review").values()
+        return [r for r in reviews if r.place_id == self.id]
+
+    if os.getenv("HBNB_TYPE_STORAGE") == "fs":
+
+        @property
+        def amenities(self):
+            """
+            returns a list of amenities with amenity ids
+            """
+            return self.amenity_ids
+
+        @amenities.setter
+        def amenities(self, obj=None):
+            """
+            setter for amenities
+            """
+            if type(obj) is Amenity:
+                self.amenity_ids.append(obj.id)
+
+place_amenity = Table(
+    'place_amenity', Base.metadata,
+    Column('place_id', String(60), ForeignKey('places.id'),
+           primary_key=True, nullable=False),
+    Column('amenity_id', String(60), ForeignKey('amenities.id'),
+           primary_key=True, nullable=False))
