@@ -29,7 +29,7 @@ def python_is_cool(text='is cool'):
 
 
 @app.route('/number/<int:n>', strict_slashes=False)
-def is_a_number(n)
+def is_a_number(n):
     return "{:d} is a number".format(n)
 
 
