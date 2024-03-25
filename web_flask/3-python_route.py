@@ -24,7 +24,7 @@ def display_text(text):
 
 @app.route('/python/<text>', strict_slashes=False)
 def python_is_cool(text = 'is cool'):
-    return 'Python' + 'text.replace('_', ' ')
+    return 'Python' + text.replace('_', ' ')
 
 
 if __name__ == '__main__':
