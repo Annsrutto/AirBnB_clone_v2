@@ -20,6 +20,7 @@ class State(BaseModel, Base):
             with state_id equals to the current State.id
             """
             from models import storage
+            from models.city import City
             all_cities = storage.all(City)
             state_cities = []
             for city in all_cities.values():
