@@ -1,10 +1,7 @@
 #!/usr/bin/python3
 """This is the database storage class for AirBnB"""
-
 import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
-from os import getenv
+
 from models.base_model import BaseModel, Base
 from models.user import User
 from models.state import State
@@ -13,9 +10,18 @@ from models.amenity import Amenity
 from models.place import Place
 from models.review import Review
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session
+
 
 class DBStorage:
-    """Class for managing database storage"""
+    """This class serializes instances to a JSON file and
+    deserializes JSON file to instances
+    Attributes:
+        __file_path: path to the JSON file
+        __objects: objects will be stored
+    """
     __engine = None
     __session = None
 
@@ -32,35 +38,33 @@ class DBStorage:
             Base.metadata.drop_all(self.__engine)
 
     def all(self, cls=None):
-        """Query on the current database session"""
-        from models import base_model
-        result = {}
-        classes = [base_model.BaseModel]
+        my_dict = {}
+
         if cls:
-            classes.append(cls)
-        for c in classes:
-            objs = self.__session.query(c).all()
-            for obj in objs:
-                key = "{}.{}".format(type(obj).__name__, obj.id)
-                result[key] = obj
-        return result
+            for obj in self.__session.query(eval(cls)).all():
+                key = "{}.{}".format(obj.__class__.__name__, obj.id)
+                my_dict[key] = obj
+        else:
+            for subcls in classes:
+                for obj in self.__session.query(subcls).all():
+                    key = "{}.{}".format(obj.__class__.__name__, obj.id)
+                    my_dict[key] = obj
+
+        return my_dict
 
     def new(self, obj):
-        """Add the object to the current database session"""
-        if obj:
-            self.__session.add(obj)
+        """ Set in obj as a database entry """
+        self.__session.add(obj)
 
     def save(self):
-        """Commit all changes of the current database session"""
+        """ commit saves to database """
         self.__session.commit()
 
     def delete(self, obj=None):
-        """Delete from the current database session"""
         if obj:
             self.__session.delete(obj)
 
     def reload(self):
-        """Create all tables in the database"""
         Base.metadata.create_all(self.__engine)
         session_factory = sessionmaker(bind=self.__engine,
                                        expire_on_commit=False)
@@ -69,4 +73,4 @@ class DBStorage:
 
     def close(self):
         """ removes a private session attribute """
-        self.__session.remove()
+        self.__session.close()
